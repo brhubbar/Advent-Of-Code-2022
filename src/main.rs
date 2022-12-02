@@ -1,7 +1,27 @@
-use aoc2022::read_file;
+#![allow(dead_code)]
+
+use aoc2022::{read_file, rps_explicit, rps_implicit};
 
 fn main() {
-    day1();
+    day2();
+}
+
+/// Compute the score of a rock paper scissors match
+fn day2() {
+    let contents = read_file("data/day2.txt");
+
+    let mut sum_part_1: u32 = 0;
+    let mut sum_part_2: u32 = 0;
+    for row in contents.split('\n') {
+        if row.is_empty() {
+            continue
+        }
+        sum_part_1 += u32::from(rps_explicit(row));
+        sum_part_2 += u32::from(rps_implicit(row));
+
+    }
+    println!("Day 2, Part 1: {:?}", sum_part_1);
+    println!("Day 2, Part 2: {:?}", sum_part_2);
 }
 
 /// Compute calories carried by each of the elves and identify the top carriers.
