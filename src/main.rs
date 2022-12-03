@@ -3,7 +3,8 @@
 use aoc2022::{
     read_file,
     find_missort,
-    prioritize_missort,
+    prioritize_items,
+    identify_badge,
     rps_explicit,
     rps_implicit,
 };
@@ -16,15 +17,29 @@ fn day3() {
     let contents = read_file("data/day3.txt");
     let mut prioritays: u32 = 0;
     let mut missorted: u8;
-    for rucksack in contents.split('\n') {
+    let rucksacks: Vec<&str> = contents.split('\n').collect();
+    for rucksack in &rucksacks {
         if rucksack.is_empty() {
             continue
         }
         missorted = find_missort(rucksack);
-        println!("{:?}", missorted);
-        prioritays += u32::from(prioritize_missort(missorted));
+        prioritays += u32::from(prioritize_items(missorted));
     }
-    println!("Day 3, Part 1: {:?}", prioritays)
+    println!("Day 3, Part 1: {:?}", prioritays);
+
+    let group_size = 3;
+    let mut badge: u8;
+    prioritays = 0;
+    for group in rucksacks.iter().collect::<Vec<&&str>>().chunks(group_size) {
+        if group.len() < group_size {
+            // Made it to the end, I presume.
+            continue
+        }
+        badge = identify_badge(group);
+        prioritays += u32::from(prioritize_items(badge));
+    }
+
+    println!("Day 3, Part 2: {:?}", prioritays);
 }
 
 /// Compute the score of a rock paper scissors match

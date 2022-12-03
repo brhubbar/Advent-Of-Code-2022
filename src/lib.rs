@@ -22,16 +22,28 @@ pub fn read_file(file_path: &str) -> String {
 ///
 /// Assumes characters coming in are in the english alphabet; therefore ascii,
 /// therefore 8-bit characters.
-pub fn find_missort(sack_contents: &str) -> u8{
+pub fn find_missort(sack_contents: &str) -> u8 {
     let n_items = sack_contents.len();  // Assumes 8-bit characters
     let mut split = sack_contents.as_bytes().chunks(n_items/2);
     let frontseat: Vec<u8> = split.next().unwrap().to_vec();
     let backseat: Vec<u8> = split.next().expect("Character unwrapping goofed up.").to_vec();
     let effed_up = frontseat.intersect(backseat);
-    if effed_up.len() > 1 {
-        panic!("<goat scream>... you have more than one missort.")
+    if effed_up.len() != 1 {
+        panic!("<goat scream>... How bad are you at sorting?!")
     }
     effed_up[0]
+}
+
+pub fn identify_badge(sack_contents: &[&&str]) -> u8 {
+    let mut badgaroni: Vec<u8> = (65..124).collect();
+    for sack in sack_contents {
+        let sack_bytes: Vec<u8> = sack.as_bytes().to_vec();
+        badgaroni = badgaroni.intersect(sack_bytes);
+    }
+    if badgaroni.len() != 1 {
+        panic!("<crying Cory>... you have one job! Find the badge!")
+    }
+    badgaroni[0]
 }
 
 /// Assign a priority to an item.
@@ -39,7 +51,7 @@ pub fn find_missort(sack_contents: &str) -> u8{
 /// 'a' = 1 (UTF == 97)
 /// 'A' = 27 (UTF == 65)
 /// ...
-pub fn prioritize_missort(item: u8) -> u8 {
+pub fn prioritize_items(item: u8) -> u8 {
     if item >= 97 { item - 97 + 1}
     else { item - 65 + 27}
 }
