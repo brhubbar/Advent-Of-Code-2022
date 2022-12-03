@@ -1,9 +1,30 @@
 #![allow(dead_code)]
 
-use aoc2022::{read_file, rps_explicit, rps_implicit};
+use aoc2022::{
+    read_file,
+    find_missort,
+    prioritize_missort,
+    rps_explicit,
+    rps_implicit,
+};
 
 fn main() {
-    day2();
+    day3();
+}
+
+fn day3() {
+    let contents = read_file("data/day3.txt");
+    let mut prioritays: u32 = 0;
+    let mut missorted: u8;
+    for rucksack in contents.split('\n') {
+        if rucksack.is_empty() {
+            continue
+        }
+        missorted = find_missort(rucksack);
+        println!("{:?}", missorted);
+        prioritays += u32::from(prioritize_missort(missorted));
+    }
+    println!("Day 3, Part 1: {:?}", prioritays)
 }
 
 /// Compute the score of a rock paper scissors match

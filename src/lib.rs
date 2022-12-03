@@ -1,7 +1,7 @@
 // Common functions for advent of code 2022.
 use std::fs;
 use std::collections::HashMap;
-
+use array_tool::vec::Intersect;
 
 /// Read the contents of a file directly into a String.
 ///
@@ -13,6 +13,35 @@ use std::collections::HashMap;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// Find the mis-sorted contents of the rucksack.
+///
+/// Splits the string in half, then finds the common character between the
+/// halves.
+///
+/// Assumes characters coming in are in the english alphabet; therefore ascii,
+/// therefore 8-bit characters.
+pub fn find_missort(sack_contents: &str) -> u8{
+    let n_items = sack_contents.len();  // Assumes 8-bit characters
+    let mut split = sack_contents.as_bytes().chunks(n_items/2);
+    let frontseat: Vec<u8> = split.next().unwrap().to_vec();
+    let backseat: Vec<u8> = split.next().expect("Character unwrapping goofed up.").to_vec();
+    let effed_up = frontseat.intersect(backseat);
+    if effed_up.len() > 1 {
+        panic!("<goat scream>... you have more than one missort.")
+    }
+    effed_up[0]
+}
+
+/// Assign a priority to an item.
+///
+/// 'a' = 1 (UTF == 97)
+/// 'A' = 27 (UTF == 65)
+/// ...
+pub fn prioritize_missort(item: u8) -> u8 {
+    if item >= 97 { item - 97 + 1}
+    else { item - 65 + 27}
 }
 
 /// Return the score of a rock-paper-scissors round
