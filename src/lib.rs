@@ -32,7 +32,21 @@ pub fn is_full_overlap(assignment_set: &str) -> bool {
             return true
         }
     }
-    println!("{:?},{:?}", min, max);
+    false
+}
+
+/// Assumes there are only two pairs in the set
+pub fn is_partial_overlap(assignment_set: &str) -> bool {
+    let mut assignments: Vec<Vec<u32>> = Vec::new();
+    for assignment in assignment_set.split(',') {
+        let mut bounds: Vec<u32> = Vec::new();
+        for bound in assignment.split('-') {
+            bounds.push(bound.parse::<u32>().expect("Failed to parse a number outta that, boy-o."))
+        }
+        let range = bounds[0]..=bounds[1];
+        assignments.push(bounds)
+    }
+
     false
 }
 
