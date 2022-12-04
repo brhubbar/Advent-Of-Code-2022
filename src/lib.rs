@@ -37,17 +37,14 @@ pub fn is_full_overlap(assignment_set: &str) -> bool {
 
 /// Assumes there are only two pairs in the set
 pub fn is_partial_overlap(assignment_set: &str) -> bool {
-    let mut assignments: Vec<Vec<u32>> = Vec::new();
+    let mut assignments: Vec<u32> = Vec::new();
     for assignment in assignment_set.split(',') {
-        let mut bounds: Vec<u32> = Vec::new();
         for bound in assignment.split('-') {
-            bounds.push(bound.parse::<u32>().expect("Failed to parse a number outta that, boy-o."))
+            assignments.push(bound.parse::<u32>().expect("Failed to parse a number outta that, boy-o."))
         }
-        let range = bounds[0]..=bounds[1];
-        assignments.push(bounds)
     }
-
-    false
+    // https://stackoverflow.com/a/325964
+    assignments[0] <= assignments[3] && assignments[1] >= assignments[2]
 }
 
 /// Find the mis-sorted contents of the rucksack.

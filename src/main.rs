@@ -3,6 +3,7 @@
 use aoc2022::{
     read_file,
     is_full_overlap,
+    is_partial_overlap,
     find_missort,
     prioritize_items,
     identify_badge,
@@ -17,14 +18,18 @@ fn main() {
 /// Check for overlapped assignments between paired elves.
 fn day4() {
     let contents = read_file("data/day4.txt");
-    let mut count = 0;
+    let mut fully_wasted = 0;
+    let mut kinda_wasted = 0;
     for pair in contents.split('\n') {
         if pair.is_empty() {
             continue
         }
-        if is_full_overlap(pair) { count += 1; };
+        if is_full_overlap(pair) { fully_wasted += 1; };
+        if is_partial_overlap(pair) { kinda_wasted += 1; };
+
     }
-    println!("Day 4, Part 1: {:?}", count);
+    println!("Day 4, Part 1: {:?}", fully_wasted);
+    println!("Day 4, Part 2: {:?}", kinda_wasted);
 }
 
 /// Check for mis-sorted and lost items stored in rucksacks.
