@@ -15,6 +15,27 @@ pub fn read_file(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read the file")
 }
 
+/// Find ranges that fully contain other ranges.
+///
+/// Input format: 'lower-upper,lower-upper'
+pub fn is_full_overlap(assignment_set: &str) -> bool {
+    let mut assignments: Vec<u32> = Vec::new();
+    for assignment in assignment_set.split(',') {
+        for bound in assignment.split('-') {
+            assignments.push(bound.parse::<u32>().expect("Failed to parse a number outta that, boy-o."))
+        }
+    }
+    let max = assignments.iter().max().unwrap();
+    let min = assignments.iter().min().unwrap();
+    for assignment in assignments.chunks(2) {
+        if assignment.contains(min) && assignment.contains(max) {
+            return true
+        }
+    }
+    println!("{:?},{:?}", min, max);
+    false
+}
+
 /// Find the mis-sorted contents of the rucksack.
 ///
 /// Splits the string in half, then finds the common character between the
