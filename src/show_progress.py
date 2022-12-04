@@ -56,9 +56,11 @@ pprint.pp(simplest_stats)
 ax.legend(loc='upper left')
 # plt.show(block=False)
 
+members = [member['name'] for member in simple_stats]
+members.sort()
 
 stats_df = pd.DataFrame(
-    index=[member['name'] for member in simple_stats],
+    index=members,
     columns=[f'Day {math.floor(star/2) + 1} Star {star%2 + 1}' for star in range(50)]
 )
 
@@ -72,7 +74,7 @@ for member in simple_stats:
 
 
 # Compute score add at each star acquisition.
-scores_df = pd.DataFrame(index=stats_df.index)
+scores_df = pd.DataFrame(index=members)
 for column, data in stats_df.items():
     sorted = data.sort_values(ascending=True)
     scored = pd.Series(
@@ -82,7 +84,7 @@ for column, data in stats_df.items():
     scored[sorted.isnull()] = 0
     scores_df[column] = scored
 
-print(scores_df)
+# print(scores_df)
 
 fig, ax = plt.subplots()
 ax.set_prop_cycle(
@@ -90,7 +92,16 @@ ax.set_prop_cycle(
     * cycler(color=['b', 'g', 'r', 'c', 'm', 'y', 'k'])
 )
 member_score_dfs = {}
-for member in scores_df.index:
+
+# Set up a mapping for the order of events.
+timestamps = stats_df.values.flatten()
+timestamps = [ts for ts in timestamps if not np.isnan(ts)]
+timestamps.sort()
+# print(timestamps)
+events = {ts: idx for idx, ts in enumerate(timestamps)}
+# pprint.pp(events)
+
+for member in members:
     df = pd.DataFrame(
         scores_df.loc[member].values,
         columns=["plus"],
@@ -99,6 +110,14 @@ for member in scores_df.index:
     df.sort_index(inplace=True)
     df["Score"] = df['plus'].cumsum()
     member_score_dfs[member] = df
-    ax.plot(df.index, df['Score'], label=member)
+    # Make the x axis event-based.
+    x_vals = []
+    for ts in df.index:
+        try:
+            x_vals.append(events[ts])
+        except KeyError:
+            # nan
+            x_vals.append(ts)
+    ax.plot(x_vals, df['Score'], label=member)
 ax.legend()
 plt.show()
