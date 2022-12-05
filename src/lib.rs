@@ -48,10 +48,13 @@ pub fn make_moves(moves: &str, stacks: &mut [Vec<&str>]) {
     let n = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
     let from = captures.get(2).unwrap().as_str().parse::<usize>().unwrap() - 1;
     let to = captures.get(3).unwrap().as_str().parse::<usize>().unwrap() - 1;
+    let mut moving_stack: Vec<&str> = Vec::new();
     for _ in 0..n {
-        let moving_crate = stacks[from].pop().expect("The `from` stack is emptry!");
-        stacks[to].push(moving_crate);
+        moving_stack.push(stacks[from].pop().expect("The `from` stack is emptry!"));
     }
+    // Comment out for part 1
+    moving_stack.reverse();
+    stacks[to].extend(moving_stack);
 }
 
 /// Find ranges that fully contain other ranges.
