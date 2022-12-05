@@ -1,7 +1,8 @@
 #![allow(dead_code)]
-
 use aoc2022::{
     read_file,
+    create_stack_regex,
+    make_moves,
     is_full_overlap,
     is_partial_overlap,
     find_missort,
@@ -12,7 +13,38 @@ use aoc2022::{
 };
 
 fn main() {
-    day4();
+    day5();
+}
+
+/// FIgure out where the crates are going to be.
+fn day5() {
+    let mut crates = read_file("data/day5_order.txt");
+    crates = crates.trim_end().to_string();
+    let mut moves = read_file("data/day5_moves.txt");
+    moves = moves.trim_end().to_string();
+
+    let finders = create_stack_regex(crates.split('\n').last().expect("Shit"));
+
+    let mut stacks: Vec<Vec<&str>> = Vec::new();
+    for finder in finders {
+        let mut stack: Vec<&str> = Vec::new();
+
+        for stack_captures in finder.captures_iter(crates.as_str()) {
+            stack.push(stack_captures.get(1).unwrap().as_str());
+        }
+        // Top of the stack needs to be the end of the Vec.
+        stack.reverse();
+        stacks.push(stack);
+    }
+    for move_set in moves.split('\n') {
+        make_moves(move_set, &mut stacks)
+    }
+    print!("Day 5, Part 1: ");
+    for stack in stacks {
+        print!("{}", stack[stack.len()-1]);
+    }
+
+
 }
 
 /// Check for overlapped assignments between paired elves.

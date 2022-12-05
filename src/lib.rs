@@ -1,7 +1,9 @@
 // Common functions for advent of code 2022.
 use std::fs;
 use std::collections::HashMap;
+
 use array_tool::vec::Intersect;
+use regex::Regex;
 
 /// Read the contents of a file directly into a String.
 ///
@@ -13,6 +15,43 @@ use array_tool::vec::Intersect;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// Parse crates arrangement.
+///
+/// This'll rearrange the visual stacks into vectors that I can push and pop
+/// from. I need LIFO (stack) effect. Vec offers this with pop_back()
+/// (https://stackoverflow.com/a/40851723).
+///
+/// Each column is a stack, which kinda blows, not gonna lie. What I'll do is
+/// split in chunks of 4 characters. The last one will be 3 characters long
+/// since the newline will have been dumped. I can then .extend() each stack
+/// with the returned empty or single-value vec. Other option is to use regex on
+/// each row. I actually like that better... time to learn regex for rust.
+pub fn create_stack_regex(crate_labels: &str) -> Vec<Regex> {
+    println!("{:?}", crate_labels);
+    let mut finders: Vec<Regex> = Vec::new();
+    for i in (0..crate_labels.len()).step_by(4) {
+        let expression = format!(r"[\n^]+.{{{}}}\[(\w)\]", i);
+        finders.push(Regex::new(expression.as_str()).expect("Write better expressions, my dude."));
+    }
+    println!("{:?}", finders);
+    finders
+}
+
+/// Rearrange crates as commanded.
+///
+/// Command format is move a from b to c
+pub fn make_moves(moves: &str, stacks: &mut [Vec<&str>]) {
+    let expression = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
+    let captures = expression.captures(moves).expect("Couldn't recognize the command.");
+    let n = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
+    let from = captures.get(2).unwrap().as_str().parse::<usize>().unwrap() - 1;
+    let to = captures.get(3).unwrap().as_str().parse::<usize>().unwrap() - 1;
+    for _ in 0..n {
+        let moving_crate = stacks[from].pop().expect("The `from` stack is emptry!");
+        stacks[to].push(moving_crate);
+    }
 }
 
 /// Find ranges that fully contain other ranges.
