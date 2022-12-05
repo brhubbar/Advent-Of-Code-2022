@@ -1,4 +1,7 @@
+"""Ugly code to plot some stats."""
+
 import contextlib
+import datetime as dt
 import json
 import math
 import os
@@ -18,7 +21,6 @@ with open(leaderboard_path, mode='r', encoding='utf-8') as file:
 
 player_stats = player_stats['members']
 n_members = len(player_stats)
-
 # List of dict
 #   name
 #   stars: {day: [timestamp, timestamp]}
@@ -39,10 +41,18 @@ for member in player_stats.values():
     })
 pprint.pp(simple_stats)
 
+members = [member['name'] for member in simple_stats]
+members.sort()
+
 # Print sum of stars over time.
 simpler_stats = {}
 simplest_stats = {}
 fix, ax = plt.subplots()
+ax.set_prop_cycle(
+    cycler(linestyle=['-', '--'], marker=['*', '*'])
+    * cycler(color=['b', 'g', 'r', 'c', 'm', 'y', 'k'])
+)
+simple_stats.sort(key=lambda x: x['name'])
 for member in simple_stats:
     stars = []
     for timestamps in member['stars'].values():
@@ -51,13 +61,12 @@ for member in simple_stats:
     simpler_stats[member['name']] = stars
     for star in stars:
         simplest_stats[star] = member['name']
-    ax.plot(stars, range(len(stars)), '-*', label=member['name'])
+    ax.plot([dt.datetime.fromtimestamp(star) for star in stars], range(len(stars)), label=member['name'])
 pprint.pp(simplest_stats)
 ax.legend(loc='upper left')
+ax.set_xlabel('Time of day')
+ax.set_ylabel('Player cumulative stars')
 # plt.show(block=False)
-
-members = [member['name'] for member in simple_stats]
-members.sort()
 
 stats_df = pd.DataFrame(
     index=members,
@@ -120,4 +129,6 @@ for member in members:
             x_vals.append(ts)
     ax.plot(x_vals, df['Score'], label=member)
 ax.legend()
+ax.set_xlabel("Collective star earned")
+ax.set_ylabel("Player cumulative score")
 plt.show()
