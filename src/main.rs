@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use aoc2022::{
     read_file,
-    find_packet_marker,
+    find_marker,
     create_stack_regex,
     make_moves,
     is_full_overlap,
@@ -20,8 +20,10 @@ fn main() {
 /// Packet detection
 fn day6() {
     let contents = read_file("data/day6.txt");
-    let packet_flag: usize = find_packet_marker(contents.as_str());
+    let packet_flag: usize = find_marker(contents.as_str(), 4);
     println!("Day 6, Part 1: {}", packet_flag);
+    let message_flag: usize = find_marker(contents.as_str(), 14);
+    println!("Day 6, Part 2: {}", message_flag);
 }
 
 /// FIgure out where the crates are going to be.

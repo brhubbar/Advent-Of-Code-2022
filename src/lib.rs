@@ -29,10 +29,10 @@ pub fn read_file(file_path: &str) -> String {
 ///
 /// Plan is to use a VecDeque to scroll through the string, then use
 /// array_tools:Vec:Uniq to find when all four characters are different.
-pub fn find_packet_marker(datastream: &str) -> usize {
-    let mut buffer: VecDeque<u8> = VecDeque::with_capacity(4);
+pub fn find_marker(datastream: &str, marker_size: usize) -> usize {
+    let mut buffer: VecDeque<u8> = VecDeque::with_capacity(marker_size);
     for (marker_location, character) in datastream.as_bytes().iter().enumerate() {
-        if buffer.len() < 4 {
+        if buffer.len() < marker_size {
             buffer.push_back(*character);
             continue;
         }
