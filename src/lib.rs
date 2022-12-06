@@ -1,8 +1,14 @@
 // Common functions for advent of code 2022.
 use std::fs;
-use std::collections::HashMap;
+use std::collections::{
+    HashMap,
+    VecDeque,
+};
 
-use array_tool::vec::Intersect;
+use array_tool::vec::{
+    Intersect,
+    Uniq,
+};
 use regex::Regex;
 
 /// Read the contents of a file directly into a String.
@@ -15,6 +21,30 @@ use regex::Regex;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// Find the start of a packet.
+///
+/// The location of the last character in a block of 4 unique characters.
+///
+/// Plan is to use a VecDeque to scroll through the string, then use
+/// array_tools:Vec:Uniq to find when all four characters are different.
+pub fn find_packet_marker(datastream: &str) -> usize {
+    let mut buffer: VecDeque<u8> = VecDeque::with_capacity(4);
+    for (marker_location, character) in datastream.as_bytes().iter().enumerate() {
+        if buffer.len() < 4 {
+            buffer.push_back(*character);
+            continue;
+        }
+        let unique_check = Vec::from_iter(buffer.iter());
+        if unique_check.is_unique() {
+            return marker_location
+        }
+        buffer.pop_front();
+        buffer.push_back(*character);
+    }
+
+    panic!("Didn't find the packet marker!")
 }
 
 /// Parse crates arrangement.
