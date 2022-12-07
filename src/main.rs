@@ -55,6 +55,21 @@ fn day7() {
     }
     println!("{:?}", folder_sizes);
     println!("Day 7, Part 1: {}", arbitrary_sum);
+
+    let total_space = 70000000;
+    let needed_space = 30000000;
+    // Find the smallest directory that, if deleted, would free up enough space
+    // the file system.
+    let minimum_delete_size = folder_sizes.get("/").unwrap() - (total_space - needed_space);
+    let mut smallest_possible_directory = "/";
+    let mut planned_delete_size = *folder_sizes.get("/").unwrap();
+    for (folder, size) in folder_sizes.iter() {
+        if *size > minimum_delete_size && *size < planned_delete_size {
+            planned_delete_size = *size;
+            smallest_possible_directory = folder;
+        }
+    }
+    println!("Day 7, Part 2: {}", planned_delete_size)
 }
 
 
