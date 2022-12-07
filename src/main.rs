@@ -33,10 +33,15 @@ fn day7() {
         }
         cwd = parse_comms_comms(cwd, cmd, &mut file_owners, &mut file_sizes);
     }
+
+    println!("{:?}", file_owners);
+    println!("{:?}", file_sizes);
+
     // Aggregate size of each directory.
     let mut folder_sizes: HashMap<String, usize> = HashMap::new();
     for file_name in file_owners.keys() {
         let file_size = file_sizes.get(file_name).unwrap();
+        *folder_sizes.entry("/".to_string()).or_insert(0) += *file_size;
         for folder in file_owners.get(file_name).unwrap() {
             *folder_sizes.entry(folder.to_owned()).or_insert(0) += *file_size;
         }
@@ -44,12 +49,10 @@ fn day7() {
     // find those under the cap size.
     let mut arbitrary_sum: usize = 0;
     for folder in folder_sizes.values() {
-        if *folder < 100000 {
+        if *folder <= 100000 {
             arbitrary_sum += *folder
         }
     }
-    println!("{:?}", file_owners);
-    println!("{:?}", file_sizes);
     println!("{:?}", folder_sizes);
     println!("Day 7, Part 1: {}", arbitrary_sum);
 }

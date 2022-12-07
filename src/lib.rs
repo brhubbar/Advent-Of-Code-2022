@@ -70,15 +70,21 @@ pub fn parse_comms_comms<'a>(
             continue
         }
         let size = type_or_size.parse::<usize>().expect("Not a number!?");
-        file_sizes.insert(name.to_owned(), size);
         let mut parents: Vec<String> = Vec::new();
-        for parent in cwd.split('/') {
+        // Be explicit about the location of a folder to protect against repeat
+        // names in different parent directories.
+        let mut parent: String = cwd.to_owned();
+        let filename = parent.to_owned() + name;
+        loop {
+            let offset = parent.rfind('/').unwrap();
+            parent.truncate(offset);
             if parent.trim().is_empty() {
-                continue
+                break
             }
             parents.push(parent.to_owned());
         }
-        file_owners.insert(name.to_owned(), parents);
+        file_sizes.insert(filename.to_owned(), size);
+        file_owners.insert(filename.to_owned(), parents);
     }
 
     cwd
