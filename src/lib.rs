@@ -23,6 +23,67 @@ pub fn read_file(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read the file")
 }
 
+/// Parse bash interactions.
+///
+/// Do them one at a time (input and output), accepting the current directory
+/// and the command. Return the current directory and update the borrowed file
+/// tree.
+///
+/// CWD
+/// Owners of each file
+/// Size of each file
+pub fn parse_comms_comms<'a>(
+    mut cwd: String,
+    cmd: &'a str,
+    file_owners: &mut HashMap<String, Vec<String>>,
+    file_sizes: &mut HashMap<String, usize>,
+) -> String {
+    if cmd.trim().starts_with("cd") {
+        let dir = cmd.trim().strip_prefix("cd ").expect("You are no good at parsing.");
+        if dir == "/" {
+            return "/".to_string()
+        }
+        if dir == ".." {
+            // This is dumb, but it'll work.
+            cwd = cwd.trim_end_matches('/').to_string();
+            let offset = cwd.rfind('/').unwrap();
+            cwd.truncate(offset);  // Keep the trailing '/'
+            return cwd + "/"
+        }
+        return cwd + dir + "/";  // One has to be owned - the other is borrowed.
+    }
+
+    // Command must start with ls.
+    if !cmd.trim().starts_with("ls") {
+        println!("{:?}", cmd);
+        panic!("Unsupported command");
+    }
+    let parts: Vec<&str> = cmd.split('\n').map(str::trim).collect();
+    for part in parts {
+        if part == "ls" {
+            continue
+        }
+        // println!("{:?}", part);
+        let (type_or_size, name) = part.split_once(' ').unwrap();
+        if type_or_size == "dir" {
+            // I don't need to do anything with this.
+            continue
+        }
+        let size = type_or_size.parse::<usize>().expect("Not a number!?");
+        file_sizes.insert(name.to_owned(), size);
+        let mut parents: Vec<String> = Vec::new();
+        for parent in cwd.split('/') {
+            if parent.trim().is_empty() {
+                continue
+            }
+            parents.push(parent.to_owned());
+        }
+        file_owners.insert(name.to_owned(), parents);
+    }
+
+    cwd
+}
+
 /// Find the start of a packet.
 ///
 /// The location of the last character in a block of 4 unique characters.

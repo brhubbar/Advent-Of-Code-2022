@@ -1,6 +1,9 @@
 #![allow(dead_code)]
+use std::collections::HashMap;
+
 use aoc2022::{
     read_file,
+    parse_comms_comms,
     find_marker,
     create_stack_regex,
     make_moves,
@@ -14,8 +17,43 @@ use aoc2022::{
 };
 
 fn main() {
-    day6();
+    day7();
 }
+
+/// Find big files.
+fn day7() {
+    let contents = read_file("data/day7.txt");
+    let mut cwd: String = "".to_owned();
+    let mut file_owners: HashMap<String, Vec<String>> = HashMap::new();
+    let mut file_sizes: HashMap<String, usize> = HashMap::new();
+    // Parse the commands and build out the tree.
+    for cmd in contents.split('$').map(str::trim) {
+        if cmd.is_empty() {
+            continue
+        }
+        cwd = parse_comms_comms(cwd, cmd, &mut file_owners, &mut file_sizes);
+    }
+    // Aggregate size of each directory.
+    let mut folder_sizes: HashMap<String, usize> = HashMap::new();
+    for file_name in file_owners.keys() {
+        let file_size = file_sizes.get(file_name).unwrap();
+        for folder in file_owners.get(file_name).unwrap() {
+            *folder_sizes.entry(folder.to_owned()).or_insert(0) += *file_size;
+        }
+    }
+    // find those under the cap size.
+    let mut arbitrary_sum: usize = 0;
+    for folder in folder_sizes.values() {
+        if *folder < 100000 {
+            arbitrary_sum += *folder
+        }
+    }
+    println!("{:?}", file_owners);
+    println!("{:?}", file_sizes);
+    println!("{:?}", folder_sizes);
+    println!("Day 7, Part 1: {}", arbitrary_sum);
+}
+
 
 /// Packet detection
 fn day6() {
