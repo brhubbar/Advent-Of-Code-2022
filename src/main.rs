@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
+use array2d::Array2D;
 
 use aoc2022::{
     read_file,
@@ -17,7 +18,75 @@ use aoc2022::{
 };
 
 fn main() {
-    day7();
+    day8();
+}
+
+/// Plan a treehouse.
+fn day8() {
+    let contents = read_file("data/day8.txt");
+    let mut grid_rows: Vec<Vec<i8>> = Vec::new();
+    for row in contents.split('\n').map(str::trim) {
+        if row.is_empty() {
+            continue
+        }
+        let mut grid_row: Vec<i8> = Vec::with_capacity(row.len());
+        for digit in row.chars() {
+            let digit_str = digit.to_string();
+            grid_row.push(digit_str.parse::<i8>().expect("Not a number???"));
+        }
+        grid_rows.push(grid_row);
+    }
+    let grid: Array2D<i8> = Array2D::from_rows(&grid_rows);
+    println!("{grid:?}");
+
+    let mut is_visible: Array2D<bool> = Array2D::filled_with(false, grid.num_rows(), grid.num_columns());
+    let mut neighbor_height: i8;
+    // Visible from top/bottom.
+    for (col_idx, col) in grid.columns_iter().enumerate() {
+        neighbor_height = -1;
+        for (row_idx, tree_height) in col.enumerate() {
+            if *tree_height > neighbor_height {
+                // Visible
+                neighbor_height = *tree_height;
+                is_visible[(row_idx, col_idx)] = true;
+            }
+        }
+    }
+    for (col_idx, col) in grid.columns_iter().enumerate() {
+        neighbor_height = -1;
+        let col_vec: Vec<&i8> = col.collect();
+        for (row_idx, &tree_height) in col_vec.iter().rev().enumerate() {
+            if *tree_height > neighbor_height {
+                // Visible
+                neighbor_height = *tree_height;
+                is_visible[(grid.num_rows()-1-row_idx, col_idx)] = true;
+            }
+        }
+    }
+    for (row_idx, row) in grid.rows_iter().enumerate() {
+        neighbor_height = -1;
+        for (col_idx, tree_height) in row.enumerate() {
+            if *tree_height > neighbor_height {
+                // Visible
+                neighbor_height = *tree_height;
+                is_visible[(row_idx, col_idx)] = true;
+            }
+        }
+    }
+    for (row_idx, row) in grid.rows_iter().enumerate() {
+        neighbor_height = -1;
+        let row_vec: Vec<&i8> = row.collect();
+        for (col_idx, &tree_height) in row_vec.iter().rev().enumerate() {
+            if *tree_height > neighbor_height {
+                // Visible
+                neighbor_height = *tree_height;
+                is_visible[(row_idx, grid.num_columns()-1-col_idx)] = true;
+            }
+        }
+    }
+    let n_visible = is_visible.elements_row_major_iter().filter(|&b| *b).count();
+    println!("{is_visible:?}");
+    println!("Day 8, Part 1: {n_visible}")
 }
 
 /// Find big files.
@@ -61,12 +130,12 @@ fn day7() {
     // Find the smallest directory that, if deleted, would free up enough space
     // the file system.
     let minimum_delete_size = folder_sizes.get("/").unwrap() - (total_space - needed_space);
-    let mut smallest_possible_directory = "/";
+    let mut _smallest_possible_directory = "/";
     let mut planned_delete_size = *folder_sizes.get("/").unwrap();
     for (folder, size) in folder_sizes.iter() {
         if *size > minimum_delete_size && *size < planned_delete_size {
             planned_delete_size = *size;
-            smallest_possible_directory = folder;
+            _smallest_possible_directory = folder;
         }
     }
     println!("Day 7, Part 2: {}", planned_delete_size)
