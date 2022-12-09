@@ -26,8 +26,17 @@ fn main() {
 /// Calculate rope motion.
 fn day9() {
     let moves = read_file("data/day9.txt");
-    let mut head = RopeEnd::new();
-    let mut tail = RopeEnd::new();
+    let part = 2;
+    let rope_length: usize =
+        if part == 1 {
+            2
+        } else {
+            10
+        };
+    let mut rope: Vec<RopeEnd> = Vec::new();
+    for _ in 0..rope_length {
+        rope.push(RopeEnd::new());
+    }
     let directions_map: HashMap<&str, [isize; 2]> = HashMap::from([
         ("U", [0, 1]),
         ("D", [0, -1]),
@@ -46,20 +55,25 @@ fn day9() {
             .get(direction)
             .expect("Unsupported move direction");
         for _ in 0..num_steps.parse().unwrap() {
-            head.move_delta(*move_coords);
-            // Figure out where tail needs to move..
-            let dx = head.x - tail.x ;
-            let dy = head.y - tail.y ;
-            if (dx.abs() > 1) || (dy.abs() > 1) {
-                // Only ever move one space in each direction.
-                tail.move_delta([dx.signum(), dy.signum()])
+            for planck_length_idx in 0..(rope.len()-1) {
+                if planck_length_idx == 0 {
+                    rope[planck_length_idx].move_delta(*move_coords);
+                }
+                // Get two mutable references by snagging a slice. Not totally
+                // clear on how this
+                let (head, tail) = if let [head, tail] = &mut rope[planck_length_idx..=planck_length_idx+1] {
+                    Some((head, tail))
+                } else {
+                    None
+                }.unwrap();
+                tail.follow(head);
             }
-            println!("({}, {}), ({}, {})", head.x, head.y, tail.x, tail.y);
+            // println!("({}, {}), ({}, {})", head.x, head.y, tail.x, tail.y);
         }
     }
 
-    let total_visits = tail.visited_spaces.len();
-    println!("Day 9, Part 1: {total_visits}")
+    let total_visits = rope[rope_length-1].visited_spaces.len();
+    println!("Day 9, Part {part}: {total_visits}")
 }
 
 /// Plan a treehouse.

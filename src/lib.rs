@@ -53,6 +53,15 @@ impl RopeEnd {
         self.y += deltas[1];
         self.visited_spaces.insert([self.x, self.y]);
     }
+
+    pub fn follow(&mut self, leader: &Self) {
+        let dx = leader.x - self.x ;
+        let dy = leader.y - self.y ;
+        if (dx.abs() > 1) || (dy.abs() > 1) {
+            // Only ever move one space in each direction.
+            self.move_delta([dx.signum(), dy.signum()])
+        }
+    }
 }
 
 impl Default for RopeEnd {
