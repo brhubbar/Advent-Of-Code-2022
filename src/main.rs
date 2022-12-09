@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
 use array2d::Array2D;
+use itertools::Itertools;
 
 use aoc2022::{
     read_file,
@@ -37,56 +38,88 @@ fn day8() {
         grid_rows.push(grid_row);
     }
     let grid: Array2D<i8> = Array2D::from_rows(&grid_rows);
-    println!("{grid:?}");
 
     let mut is_visible: Array2D<bool> = Array2D::filled_with(false, grid.num_rows(), grid.num_columns());
-    let mut neighbor_height: i8;
-    // Visible from top/bottom.
-    for (col_idx, col) in grid.columns_iter().enumerate() {
-        neighbor_height = -1;
-        for (row_idx, tree_height) in col.enumerate() {
-            if *tree_height > neighbor_height {
-                // Visible
-                neighbor_height = *tree_height;
+    let mut scenic_score: Array2D<usize> = Array2D::filled_with(0, grid.num_rows(), grid.num_columns());
+    // Trees can only be hidden if not on the edge. Similarly, scenic score can
+    // only be non-zero is not on the edge.
+    for (row_idx, col_idx) in (1..grid.num_rows()-1).cartesian_product(1..grid.num_columns()-1) {
+        let tree_height = grid[(row_idx, col_idx)];
+        scenic_score[(row_idx, col_idx)] = 1;
+        // println!("{row_idx}, {col_idx}, {tree_height}");
+
+        let mut row = grid.row_iter(row_idx);
+        // Take the part of the row after col_idx
+        let taller = row.enumerate()
+            .filter(|&(idx, h)| idx>col_idx && *h>=tree_height)
+            .map(|(idx, _)| idx)
+            .next();
+        match taller {
+            Some(idx) => {
+                // println!("{col_idx} --> {idx}");
+                scenic_score[(row_idx, col_idx)] *= idx - col_idx;
+            },
+            None => {
+                let end = grid.num_columns() - 1 - col_idx;
+                // println!("{col_idx} --> {end}");
                 is_visible[(row_idx, col_idx)] = true;
-            }
+                scenic_score[(row_idx, col_idx)] *= end;
+            },
         }
-    }
-    for (col_idx, col) in grid.columns_iter().enumerate() {
-        neighbor_height = -1;
-        let col_vec: Vec<&i8> = col.collect();
-        for (row_idx, &tree_height) in col_vec.iter().rev().enumerate() {
-            if *tree_height > neighbor_height {
-                // Visible
-                neighbor_height = *tree_height;
-                is_visible[(grid.num_rows()-1-row_idx, col_idx)] = true;
-            }
-        }
-    }
-    for (row_idx, row) in grid.rows_iter().enumerate() {
-        neighbor_height = -1;
-        for (col_idx, tree_height) in row.enumerate() {
-            if *tree_height > neighbor_height {
-                // Visible
-                neighbor_height = *tree_height;
+        row = grid.row_iter(row_idx);
+        let taller = row.enumerate()
+            .filter(|&(idx, h)| idx<col_idx && *h>=tree_height)
+            .map(|(idx, _)| idx)
+            .last();
+        match taller {
+            Some(idx) => {
+                scenic_score[(row_idx, col_idx)] *= col_idx - idx;
+            },
+            None => {
                 is_visible[(row_idx, col_idx)] = true;
-            }
+                scenic_score[(row_idx, col_idx)] *= col_idx;
+            },
+        }
+
+        let mut col = grid.column_iter(col_idx);
+        // Take the part of the row after row
+        let taller = col.enumerate()
+            .filter(|&(idx, h)| idx>row_idx && *h>=tree_height)
+            .map(|(idx, _)| idx)
+            .next();
+        match taller {
+            Some(idx) => {
+                scenic_score[(row_idx, col_idx)] *= idx - row_idx;
+            },
+            None => {
+                is_visible[(row_idx, col_idx)] = true;
+                scenic_score[(row_idx, col_idx)] *= grid.num_rows() - 1 - row_idx;
+            },
+        }
+        col = grid.column_iter(col_idx);
+        let taller = col.enumerate()
+            .filter(|&(idx, h)| idx<row_idx && *h>=tree_height)
+            .map(|(idx, _)| idx)
+            .last();
+        match taller {
+            Some(idx) => {
+                scenic_score[(row_idx, col_idx)] *= row_idx - idx;
+            },
+            None => {
+                is_visible[(row_idx, col_idx)] = true;
+                scenic_score[(row_idx, col_idx)] *= row_idx;
+            },
         }
     }
-    for (row_idx, row) in grid.rows_iter().enumerate() {
-        neighbor_height = -1;
-        let row_vec: Vec<&i8> = row.collect();
-        for (col_idx, &tree_height) in row_vec.iter().rev().enumerate() {
-            if *tree_height > neighbor_height {
-                // Visible
-                neighbor_height = *tree_height;
-                is_visible[(row_idx, grid.num_columns()-1-col_idx)] = true;
-            }
-        }
-    }
-    let n_visible = is_visible.elements_row_major_iter().filter(|&b| *b).count();
+
+    let n_visible = is_visible.elements_row_major_iter().filter(|&b| *b).count()
+        + grid.num_columns()*2 + grid.num_rows()*2 - 4;  // Double counted the corners
     println!("{is_visible:?}");
-    println!("Day 8, Part 1: {n_visible}")
+    println!("Day 8, Part 1: {n_visible}");
+
+    let best_score = scenic_score.elements_row_major_iter().max().unwrap();
+    println!("Day 8, Part 2: {best_score}");
+
 }
 
 /// Find big files.
