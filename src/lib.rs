@@ -2,6 +2,7 @@
 use std::fs;
 use std::collections::{
     HashMap,
+    HashSet,
     VecDeque,
 };
 
@@ -21,6 +22,43 @@ use regex::Regex;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// Rope end structure to track position on a grid.
+///
+/// Initial position is 0, 0.
+pub struct RopeEnd {
+    pub x: isize,
+    pub y: isize,
+    pub visited_spaces: HashSet<[isize; 2]>,  // Keep track of where it's been.
+}
+
+impl RopeEnd {
+    /// Create a new rope end at the starting position.
+    pub fn new() -> Self {
+        let mut visited_spaces: HashSet<[isize; 2]> = HashSet::new();
+        visited_spaces.insert([0, 0]);
+        Self {
+            x: 0,
+            y: 0,
+            visited_spaces,
+        }
+    }
+
+    /// Make a delta move in x and y.
+    ///
+    /// e.g. move_delta(1, 1) would increase x and y each by 1.
+    pub fn move_delta(&mut self, deltas: [isize; 2]) {
+        self.x += deltas[0];
+        self.y += deltas[1];
+        self.visited_spaces.insert([self.x, self.y]);
+    }
+}
+
+impl Default for RopeEnd {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Parse bash interactions.

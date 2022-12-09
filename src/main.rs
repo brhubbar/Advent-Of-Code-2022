@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    RopeEnd,
     parse_comms_comms,
     find_marker,
     create_stack_regex,
@@ -19,7 +20,46 @@ use aoc2022::{
 };
 
 fn main() {
-    day8();
+    day9();
+}
+
+/// Calculate rope motion.
+fn day9() {
+    let moves = read_file("data/day9.txt");
+    let mut head = RopeEnd::new();
+    let mut tail = RopeEnd::new();
+    let directions_map: HashMap<&str, [isize; 2]> = HashMap::from([
+        ("U", [0, 1]),
+        ("D", [0, -1]),
+        ("L", [-1, 0]),
+        ("R", [1, 0]),
+    ]);
+
+    for move_ in moves.split('\n') {
+        if move_.trim().is_empty() {
+            continue
+        }
+        let (direction, num_steps) = move_
+            .split_once(' ')
+            .expect("Move isn't formatted as expected");
+        let move_coords = directions_map
+            .get(direction)
+            .expect("Unsupported move direction");
+        for _ in 0..num_steps.parse().unwrap() {
+            head.move_delta(*move_coords);
+            // Figure out where tail needs to move..
+            let dx = head.x - tail.x ;
+            let dy = head.y - tail.y ;
+            if (dx.abs() > 1) || (dy.abs() > 1) {
+                // Only ever move one space in each direction.
+                tail.move_delta([dx.signum(), dy.signum()])
+            }
+            println!("({}, {}), ({}, {})", head.x, head.y, tail.x, tail.y);
+        }
+    }
+
+    let total_visits = tail.visited_spaces.len();
+    println!("Day 9, Part 1: {total_visits}")
 }
 
 /// Plan a treehouse.
