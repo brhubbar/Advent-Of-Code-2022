@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    CRT,
     CPU,
     RopeEnd,
     parse_comms_comms,
@@ -28,6 +29,7 @@ fn main() {
 fn day10() {
     let operations = read_file("data/day10.txt");
     let mut cpu = CPU::new();
+    let mut crt = CRT::new();
     // Queue up all operations.
     for operation in operations.split('\n').map(|x| x.trim()) {
         if operation.trim().is_empty() {
@@ -49,13 +51,15 @@ fn day10() {
             Ok(cycle) => current_cycle = cycle,
             Err(_) => break 'frankie,
         }
+        crt.lazer_beam_it(current_cycle, cpu.x);
 
         if cycles_of_mild_interest.contains(&current_cycle) {
             signal_strength += cpu.get_signal_strength()
         }
     }
 
-    println!("Day 10, Part 1: {signal_strength}")
+    println!("Day 10, Part 1: {signal_strength}");
+    crt.visualize();
 }
 
 /// Calculate rope motion.

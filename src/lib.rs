@@ -1,5 +1,7 @@
 // Common functions for advent of code 2022.
-use std::fs;
+use std::{
+    fs,
+};
 use std::collections::{
     HashMap,
     HashSet,
@@ -10,6 +12,7 @@ use array_tool::vec::{
     Intersect,
     Uniq,
 };
+use itertools::Itertools;
 use regex::Regex;
 
 /// Read the contents of a file directly into a String.
@@ -22,6 +25,56 @@ use regex::Regex;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// CRT for the comms device
+///
+/// Each clock cycle, draws a single pixel on a 40x6 display. hi/lo is
+/// determined by the location of a 3-wide sprite (CPU x +/- 1)
+pub struct CRT {
+    display: Vec<bool>,
+    width: usize,
+    height: usize,
+}
+
+impl CRT {
+    pub fn new() -> Self {
+        let width = 40;
+        let height = 6;
+        Self {
+            display: vec![false; width*height],
+            width,
+            height,
+        }
+    }
+
+    /// Run once per cycle. Draws on a lag (cycle 1 draws pixel 0).
+    pub fn lazer_beam_it(&mut self, cycle: usize, sprite_pos: isize) {
+        if cycle >= self.width * self.height {
+            return
+        }
+        let crt_pos = (cycle-1) % 40;
+        self.display[cycle-1] = (crt_pos as isize - sprite_pos).abs() <= 1;
+    }
+
+    pub fn visualize(&self) {
+        for row in &self.display.iter().chunks(self.width) {
+            for &pixel in row {
+                if pixel {
+                    print!("#");
+                    continue
+                }
+                print!(".")
+            }
+            println!()
+        }
+    }
+}
+
+impl Default for CRT {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// CPU for the comms device
@@ -38,8 +91,9 @@ impl CPU {
     pub fn new() -> Self {
         Self {
             x: 1,
-            cycle: 1,
-            queue: VecDeque::with_capacity(2),
+            // zeroth cycle is a no-op.
+            cycle: 0,
+            queue: VecDeque::from([0]),
         }
     }
 
