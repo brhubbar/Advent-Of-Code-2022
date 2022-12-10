@@ -24,6 +24,69 @@ pub fn read_file(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read the file")
 }
 
+/// CPU for the comms device
+///
+/// noop : 1 cycle
+/// addx : 2 cycles (value changes *after* cycle ends)
+pub struct CPU {
+    pub x: isize,
+    pub cycle: usize,
+    queue: VecDeque<isize>,  // Stores delta x for upcoming clock cycles.
+}
+
+impl CPU {
+    pub fn new() -> Self {
+        Self {
+            x: 1,
+            cycle: 1,
+            queue: VecDeque::with_capacity(2),
+        }
+    }
+
+    /// Queue up a no-op.
+    pub fn noop(&mut self) {
+        self.queue.push_back(0);
+    }
+
+    /// Queue up an add operation.
+    pub fn addx(&mut self, dx: isize) {
+        self.queue.push_back(0);
+        self.queue.push_back(dx);
+    }
+
+    pub fn get_runtime_in_cycles(&self) -> usize {
+        self.queue.len()
+    }
+
+    /// Executes a clock cycle if there's an instruction ready.
+    ///
+    /// Returns the current cycle, either as an Ok or an Err.
+    pub fn execute_clock_cycle(&mut self) -> Result<usize, usize>{
+        match self.queue.pop_front() {
+            Some(dx) => {
+                self.x += dx;
+                self.cycle += 1;
+                Ok(self.cycle)
+            },
+            None => {
+                Err(self.cycle)
+            }
+        }
+    }
+
+    pub fn get_signal_strength(&self) -> isize {
+        self.cycle as isize * self.x
+    }
+}
+
+impl Default for CPU {
+    fn default() -> Self {
+        Self::new()
+    }
+
+
+}
+
 /// Rope end structure to track position on a grid.
 ///
 /// Initial position is 0, 0.

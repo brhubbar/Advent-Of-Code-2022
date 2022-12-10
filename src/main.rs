@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    CPU,
     RopeEnd,
     parse_comms_comms,
     find_marker,
@@ -20,7 +21,41 @@ use aoc2022::{
 };
 
 fn main() {
-    day9();
+    day10();
+}
+
+/// Rebuild the video/cpu for the comms device.
+fn day10() {
+    let operations = read_file("data/day10.txt");
+    let mut cpu = CPU::new();
+    // Queue up all operations.
+    for operation in operations.split('\n').map(|x| x.trim()) {
+        if operation.trim().is_empty() {
+            continue
+        }
+        if operation == "noop" {
+            cpu.noop();
+        } else if operation.starts_with("addx") {
+            let dx = operation.split(' ').last().unwrap().parse::<isize>().unwrap();
+            cpu.addx(dx);
+        }
+    }
+
+    let cycles_of_mild_interest: Vec<usize> = vec![20, 60, 100, 140, 180, 220];
+    let mut signal_strength: isize = 0;
+    let mut current_cycle: usize;
+    'frankie: loop {
+        match cpu.execute_clock_cycle() {
+            Ok(cycle) => current_cycle = cycle,
+            Err(_) => break 'frankie,
+        }
+
+        if cycles_of_mild_interest.contains(&current_cycle) {
+            signal_strength += cpu.get_signal_strength()
+        }
+    }
+
+    println!("Day 10, Part 1: {signal_strength}")
 }
 
 /// Calculate rope motion.
