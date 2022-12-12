@@ -56,10 +56,16 @@ impl MapNode {
         }
     }
 
-    pub fn is_neighbor(&self, other: &Self) -> bool {
+    pub fn is_upward_neighbor(&self, other: &Self) -> bool {
         (((self.x - other.x).abs() == 1 && self.y == other.y)
         || ((self.y - other.y).abs() ==1 && self.x == other.x))
         && (other.elevation - self.elevation) <= 1
+    }
+
+    pub fn is_downward_neighbor(&self, other: &Self) -> bool {
+        (((self.x - other.x).abs() == 1 && self.y == other.y)
+        || ((self.y - other.y).abs() ==1 && self.x == other.x))
+        && (self.elevation - other.elevation) <= 1
     }
 }
 
