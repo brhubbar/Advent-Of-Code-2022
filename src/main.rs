@@ -5,6 +5,8 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    get_next_node_coords,
+    MapNode,
     CRT,
     CPU,
     RopeEnd,
@@ -22,7 +24,61 @@ use aoc2022::{
 };
 
 fn main() {
-    day10();
+    day12();
+}
+
+/// Path planning
+fn day12() {
+    let height_map = read_file("data/day12.txt");
+    let mut map: HashMap<[isize; 2], MapNode> = HashMap::new();
+
+    let mut _initial_node: [isize; 2] = [0, 0];
+    let mut destination_node: [isize; 2] = [0, 0];
+
+    for (y, row) in height_map.split('\n').enumerate() {
+        for (x, character) in row.chars().enumerate() {
+            let coords = [x as isize, y as isize];
+            // println!("{coords:?}");
+            let elevation: isize;
+            if character == 'S' {
+                _initial_node = coords;
+                elevation = 'a' as isize;
+            } else if character == 'E' {
+                destination_node = coords;
+                elevation = 'z' as isize;
+            } else {
+                elevation = character as isize;
+            };
+            map.insert(coords, MapNode::new(x as isize, y as isize, elevation, character=='S'));
+        }
+    }
+
+    'djikstra: loop {
+        let next_node_coords = get_next_node_coords(&map);
+
+        match next_node_coords {
+            Some(node_coords) => {
+                println!("{node_coords:?}");
+                if node_coords == destination_node {
+                    break 'djikstra
+                }
+                {
+                    let current_node = map.get(&node_coords).expect("No node here...").clone();
+                    for neighbor in map.values_mut().filter(|node| current_node.is_neighbor(node) && !node.is_visited) {
+                        println!("n: {} {}", neighbor.x, neighbor.y);
+                        let current_distance = current_node.distance_from_initial + 1;
+                        if current_distance < neighbor.distance_from_initial {
+                            neighbor.distance_from_initial = current_distance;
+                        }
+                    }
+                }
+                let current_node = map.get_mut(&node_coords).unwrap();
+                current_node.is_visited = true;
+            },
+            None => break,
+        }
+    }
+    println!("Day 12, Part 1: {}", map.get(&destination_node).unwrap().distance_from_initial)
 }
 
 /// Rebuild the video/cpu for the comms device.

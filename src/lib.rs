@@ -27,6 +27,75 @@ pub fn read_file(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read the file")
 }
 
+/// Height map
+///
+/// S = current position (elevation `a`)
+/// E = target position (elevation `z`)
+///
+/// Elevations `a`-`z` (low to high).
+///
+/// Motion is orthogonal, no more than one step up in elevation (e.g. a->b,
+/// e->a, ...)
+#[derive(Clone)]
+pub struct MapNode {
+    pub x: isize,
+    pub y: isize,
+    pub elevation: isize,
+    pub distance_from_initial: usize,
+    pub is_visited: bool,
+}
+
+impl MapNode {
+    pub fn new(x: isize, y: isize, elevation: isize, is_initial: bool) -> Self {
+        Self {
+            x,
+            y,
+            elevation,
+            distance_from_initial: if is_initial { 0 } else { usize::MAX },  // Djikstra step 2.
+            is_visited: false,  // Djikstra step 1.
+        }
+    }
+
+    pub fn is_neighbor(&self, other: &Self) -> bool {
+        (((self.x - other.x).abs() == 1 && self.y == other.y)
+        || ((self.y - other.y).abs() ==1 && self.x == other.x))
+        && (other.elevation - self.elevation) <= 1
+    }
+}
+
+impl Ord for MapNode {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.distance_from_initial.cmp(&other.distance_from_initial)
+    }
+}
+
+impl PartialOrd for MapNode {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for MapNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.distance_from_initial == other.distance_from_initial
+    }
+}
+
+impl Eq for MapNode {}
+
+/// Return the node with the minimum estimated distance to initial.
+pub fn get_next_node_coords(nodes: &HashMap<[isize; 2], MapNode>) -> Option<[isize; 2]>{
+    nodes.values().filter(|&node| !node.is_visited).min().map(|node| [node.x, node.y])
+}
+
+/// Djikstra's algorithm.
+///
+/// Nodes have already been marked visited or nots
+
+/// Going to try Djikstra's algorithm
+///
+///
+
 /// CRT for the comms device
 ///
 /// Each clock cycle, draws a single pixel on a 40x6 display. hi/lo is
