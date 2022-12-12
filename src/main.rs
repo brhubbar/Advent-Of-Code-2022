@@ -58,14 +58,12 @@ fn day12() {
 
         match next_node_coords {
             Some(node_coords) => {
-                println!("{node_coords:?}");
                 if node_coords == destination_node {
                     break 'djikstra
                 }
                 {
                     let current_node = map.get(&node_coords).expect("No node here...").clone();
                     for neighbor in map.values_mut().filter(|node| current_node.is_neighbor(node) && !node.is_visited) {
-                        println!("n: {} {}", neighbor.x, neighbor.y);
                         let current_distance = current_node.distance_from_initial + 1;
                         if current_distance < neighbor.distance_from_initial {
                             neighbor.distance_from_initial = current_distance;
