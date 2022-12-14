@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    compare_lists,
     get_next_node_coords,
     MapNode,
     CRT,
@@ -24,7 +25,23 @@ use aoc2022::{
 };
 
 fn main() {
-    day12();
+    day13();
+}
+
+/// Packet translation
+fn day13() {
+    let packets = read_file("data/day13.txt");
+    let mut count: usize = 0;
+    for (packet_idx, packet_pair) in packets.split("\n\n").enumerate() {
+        let (left, right) = packet_pair
+            .split_once('\n')
+            .expect("Not a packet pair.");
+        println!("\n{left} {right}");
+        if compare_lists(left.to_string(), right.to_string()).expect("Found identical packets") {
+            count += packet_idx + 1;  // Elves index from 1
+        }
+    }
+    println!("Day 13, Part 1: {count}")
 }
 
 /// Path planning

@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 // Common functions for advent of code 2022.
 use std::{
     fs,
@@ -25,6 +26,157 @@ use regex::Regex;
 pub fn read_file(file_path: &str) -> String {
     // source: https://doc.rust-lang.org/book/ch12-01-accepting-command-line-arguments.html
     fs::read_to_string(file_path).expect("Should have been able to read the file")
+}
+
+/// Packet sorting
+///
+/// Each line is a list of integers and lists, forming a packet. Compare values
+/// between the two packets.
+///
+/// - Comparing integers: **lower should come first**.
+/// - Comparing lists: iterate through lists **comparing values**. If a list
+///   comes to an end before a decision is made, **the shorter list should come
+///   first**. equal length lists tell you nothing.
+/// - Comparing a list and an integer: convert int to list, then compare lists.
+///
+/// Returns true if in correct order.
+
+#[derive(Debug)]
+enum PacketValue {
+    Integer(usize),
+    List(String),
+}
+
+/// Returns the list with the 'popped' value removed, plus the popped value.
+/// Assumes that the outermost list, so to speak, has its brackets removed. If
+/// they're not, no need to fret: it'll just return that outermost list.
+/// If it determines that it's returning the last value in the list, it'll
+/// return None for the remaining list.
+pub fn compare_lists(left: String, right: String) -> Option<bool> {
+    // Catch the edge case that an empty list came to eff up your day
+    if left.is_empty() {
+        return Some(true)
+    } else if right.is_empty() {
+        return Some(false)
+    }
+    let result: Option<bool>;
+    // print!("{left}, {right} => ");
+    let (left, next_left_value) = get_next_value(left);
+    let (right, next_right_value) = get_next_value(right);
+    // println!("{next_left_value:?}, {next_right_value:?}");
+    // Compare current values.
+    match next_left_value {
+        PacketValue::Integer(left) => {
+            // Compare to right.
+            match next_right_value {
+                PacketValue::Integer(right) => {
+                    // println!("Path 1");
+                    result = compare_integers(left, right)
+                },
+                PacketValue::List(right) => {
+                    // println!("Path 2");
+                    result = compare_lists(left.to_string(), right)
+                }
+            }
+        }
+        PacketValue::List(left) => {
+            // Recurse.
+            match next_right_value {
+                PacketValue::Integer(right) => {
+                    // println!("Path 3");
+                    result = compare_lists(left, right.to_string())
+                }
+                PacketValue::List(right) => {
+                    // println!("Path 4");
+                    result = compare_lists(left, right)
+                }
+            }
+        }
+    }
+
+    // println!("Result: {result:?}; {left:?}, {right:?}");
+
+    match result {
+        Some(result) => Some(result),
+        None => {
+            match left {
+                Some(left) => {
+                    // Left has a remaining value.
+                    match right {
+                        Some(right) => {
+                            compare_lists(left, right)
+                        }
+                        None => {
+                            // Left is longer than right.
+                            Some(false)
+                        }
+                    }
+                },
+                None => {
+                    // Left is done.
+                    // If right still exists, then left is shorter than right,
+                    // which means they are properly sorted.
+                    // If right is also done, then Left == Right.
+                    right.map(|_| true)
+                }
+            }
+        },
+    }
+}
+
+fn get_next_value(list: String) -> (Option<String>, PacketValue) {
+    if list.starts_with('[') {
+        // Break out the outermost list and return it.
+        let mut closing_brace_idx: usize = list.len();
+        let mut depth_counter = 0;
+        for (idx, c) in list.chars().enumerate() {
+            match c {
+                '[' => depth_counter += 1,  // Guaranteed to happen on first iteration.
+                ']' => depth_counter -= 1,
+                _ => {},
+            }
+
+            if depth_counter == 0 {
+                closing_brace_idx = idx;
+                break
+            }
+        }
+
+        // Get the next value, a list, without its braces.
+        let popped_list: String = list.chars()
+            .enumerate()
+            .filter(|(idx, _)| *idx > 0 && *idx < closing_brace_idx)
+            .map(|(_, c)| c)
+            .collect();
+        // Get the list with the next value removed.
+        let remaining_list: String = list.chars()
+            .enumerate()
+            .filter(|(idx, _)| *idx > closing_brace_idx)
+            .map(|(_, c)| c)
+            .collect();
+        return (Some(remaining_list.trim_matches(',').to_string()), PacketValue::List(popped_list))
+    }
+
+    let tmp = list.split_once(',');
+    match tmp {
+        Some((popped_integer, remaining)) => {
+            let parsed_integer = popped_integer.parse::<usize>().expect("Not reading an integer...");
+            (Some(remaining.to_string()), PacketValue::Integer(parsed_integer))
+        },
+        None => {
+            let parsed_integer = list.parse::<usize>().expect("Not reading an integer...");
+            (None, PacketValue::Integer(parsed_integer))
+        }
+    }
+}
+
+/// Returns a boolean indicating whether the packets are sorted correctly.
+fn compare_integers(left: usize, right: usize) -> Option<bool> {
+    match left.cmp(&right) {
+        Ordering::Less => Some(true),
+        Ordering::Greater => Some(false),
+        Ordering::Equal => None,
+    }
 }
 
 /// Height map
