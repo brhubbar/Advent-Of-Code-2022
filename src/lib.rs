@@ -28,6 +28,176 @@ pub fn read_file(file_path: &str) -> String {
     fs::read_to_string(file_path).expect("Should have been able to read the file")
 }
 
+/// Day 14: Sand tracking.
+///
+/// - Sand is falling into a cave.
+/// - Cave spaces can be Sand, Rock, or Air.
+/// - Sand falls until it rests. Its fall behavior is as follows:
+///     - Fall downward if occupying air, else
+///     - Fall diagonal down-left if occupying air, else
+///     - Fall diagonal down-right if occupying air, else
+///     - Rest
+
+#[derive(Clone, Copy, Debug)]
+enum SpaceType {
+    Air,
+    Rock,
+    Sand,
+}
+
+
+/// Tracks spaces that are not air.
+pub struct Cave {
+    spaces: HashMap<[isize; 2], SpaceType>,
+    sand_source: [isize; 2],
+}
+
+impl Cave {
+    pub fn new(sand_source: [isize; 2]) -> Self {
+        Self {
+            spaces: HashMap::new(),
+            sand_source,
+        }
+    }
+
+    /// Return [[L, R], [B, T]]
+    fn get_bounds(&self) -> [[isize; 2]; 2] {
+        let l = self.spaces
+            .keys()
+            .map(|[x, _]| *x)
+            .min()
+            .unwrap();
+        let r = self.spaces
+            .keys()
+            .map(|[x, _]| *x)
+            .max()
+            .unwrap();
+        let t = self.spaces
+            .keys()
+            .map(|[_, y]| *y)
+            .min()
+            .unwrap();
+        let b = self.spaces
+            .keys()
+            .map(|[_, y]| *y)
+            .max()
+            .unwrap();
+        [[l, r], [b, t]]
+    }
+
+    pub fn print_cave(&self) {
+        let bounds = self.get_bounds();
+        // println!("{bounds:?}");
+        for y in 0..=bounds[1][0] {
+            for x in bounds[0][0]..=bounds[0][1] {
+                // print!("({x}, {y}); ");
+
+                match self.get_space(&[x, y]).expect("Bad iterator for printing.") {
+                    SpaceType::Rock => print!("#"),
+                    SpaceType::Sand => print!("o"),
+                    SpaceType::Air => print!("."),
+                }
+            }
+            println!();
+        }
+    }
+
+    fn get_space(&self, coords: &[isize; 2]) -> Option<SpaceType>{
+        if let Some(space) = self.spaces.get(coords) {
+            Some(space.to_owned())
+        } else {
+            let bounds = self.get_bounds();
+            // println!("{coords:?} within {bounds:?}?");
+            if coords[0] < bounds[0][0]
+                || coords[0] > bounds[0][1]
+                || coords[1] > bounds[1][0]  // Y is inverted
+                // || coords[1] > bounds[1][1]  // This is checking if the sand
+                // is too high, which doesn't apply
+            {
+                return None
+            }
+            Some(SpaceType::Air)
+        }
+    }
+
+    pub fn read_scan(&mut self, scan: &str) {
+        for edge in scan.split('\n') {
+            let mut vertices: Vec<[isize; 2]> = Vec::new();
+            for vertex in edge.split(" -> ") {
+                let coords: Vec<isize> = vertex
+                    .split(',')
+                    .map(|coord| coord.parse::<isize>().expect("Not an integer!"))
+                    .collect();
+                vertices.push([coords[0], coords[1]])
+            }
+            let mut last_vertex: [isize; 2] = vertices.pop().expect("Empty edge!");
+            let mut current_vertex: [isize; 2];
+            while !vertices.is_empty() {
+                current_vertex = vertices.pop().expect("Your while loop STANKS");
+                // println!("{last_vertex:?} -> {current_vertex:?}");
+                let mut x: [isize; 2] = [last_vertex[0], current_vertex[0]];
+                let mut y: [isize; 2] = [last_vertex[1], current_vertex[1]];
+                x.sort();
+                y.sort();
+                if x[0] == x[1] {
+                    // Vertical edge.
+                    // This will overwrite every vertex except the first.
+                    for y in y[0]..=y[1] {
+                        self.spaces.insert([x[0], y], SpaceType::Rock);
+                    }
+                } else if y[0] == y[1] {
+                    // Vertical edge.
+                    // This will overwrite every vertex except the first.
+                    for x in x[0]..=x[1] {
+                        self.spaces.insert([x, y[0]], SpaceType::Rock);
+                    }
+                } else {
+                    panic!("Overlapping vertices!")
+                }
+                last_vertex = current_vertex;
+            }
+        }
+    }
+
+    /// Add a grain of sand and place it at rest. Returns true if the sand came
+    /// to rest, false if the sand fell out into the abyss.
+    pub fn add_grain_of_sand(&mut self) -> bool {
+        // Calculate where it'll end up and then place it directly, rather than
+        // moving it through space.
+        // println!("{:?}", self.spaces);
+        let mut sand_resting_place: [isize; 2] = self.sand_source;
+        'falling_sand: loop {
+            let [x, y]: [isize; 2] = sand_resting_place;
+            let try_spaces: Vec<[isize; 2]> = vec![[x, y+1], [x-1, y+1], [x+1, y+1]];
+            for try_space in try_spaces {
+                match self.get_space(&try_space) {
+                    Some(SpaceType::Air) => {
+                        sand_resting_place = try_space;
+                        continue 'falling_sand
+                    },
+                    None => {
+                        // The next space is off the map, sand falls into that
+                        // space for eternity, so send a signal to indicate
+                        // that.
+                        return false
+                    },
+                    _ => {},
+                }
+            }
+            // Stopped falling.
+            self.spaces.insert(sand_resting_place, SpaceType::Sand);
+            return true
+
+        }
+    }
+}
+
+impl Default for Cave {
+    fn default() -> Self {
+        Self::new([500, 0])
+    }
+}
+
 /// Packet sorting
 ///
 /// Each line is a list of integers and lists, forming a packet. Compare values

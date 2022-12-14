@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 use aoc2022::{
     read_file,
+    Cave,
     compare_lists,
     get_next_node_coords,
     MapNode,
@@ -25,7 +26,22 @@ use aoc2022::{
 };
 
 fn main() {
-    day13();
+    day14();
+}
+
+/// Sand tracking
+fn day14() {
+    let cave_scan = read_file("data/day14.txt");
+    let mut cave = Cave::default();
+    cave.read_scan(cave_scan.trim());
+
+    let mut drops_in_the_bucket = 0;
+    while cave.add_grain_of_sand() {
+        drops_in_the_bucket += 1;
+        // cave.print_cave();
+    }
+
+    println!("Day 14, Part 1: {drops_in_the_bucket}");
 }
 
 /// Packet translation
