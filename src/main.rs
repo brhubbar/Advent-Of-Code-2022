@@ -36,8 +36,8 @@ fn day13() {
         let (left, right) = packet_pair
             .split_once('\n')
             .expect("Not a packet pair.");
-        println!("\n{left} {right}");
         if compare_lists(left.to_string(), right.to_string()).expect("Found identical packets") {
+            println!("\n{packet_idx}:\n{left}\n{right}");
             count += packet_idx + 1;  // Elves index from 1
         }
     }

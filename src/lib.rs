@@ -45,6 +45,7 @@ pub fn read_file(file_path: &str) -> String {
 enum PacketValue {
     Integer(usize),
     List(String),
+    None,
 }
 
 /// Returns the list with the 'popped' value removed, plus the popped value.
@@ -53,46 +54,65 @@ enum PacketValue {
 /// If it determines that it's returning the last value in the list, it'll
 /// return None for the remaining list.
 pub fn compare_lists(left: String, right: String) -> Option<bool> {
-    // Catch the edge case that an empty list came to eff up your day
-    if left.is_empty() {
-        return Some(true)
-    } else if right.is_empty() {
-        return Some(false)
-    }
-    let result: Option<bool>;
     // print!("{left}, {right} => ");
     let (left, next_left_value) = get_next_value(left);
     let (right, next_right_value) = get_next_value(right);
     // println!("{next_left_value:?}, {next_right_value:?}");
     // Compare current values.
-    match next_left_value {
+    let result: Option<bool> = match next_left_value {
         PacketValue::Integer(left) => {
             // Compare to right.
             match next_right_value {
                 PacketValue::Integer(right) => {
                     // println!("Path 1");
-                    result = compare_integers(left, right)
+                    compare_integers(left, right)
                 },
                 PacketValue::List(right) => {
                     // println!("Path 2");
-                    result = compare_lists(left.to_string(), right)
+                    compare_lists(left.to_string(), right)
+                }
+                PacketValue::None => {
+                    // Right list is empty and Left list is not.
+                    Some(false)
                 }
             }
-        }
+        },
         PacketValue::List(left) => {
             // Recurse.
             match next_right_value {
                 PacketValue::Integer(right) => {
                     // println!("Path 3");
-                    result = compare_lists(left, right.to_string())
-                }
+                    compare_lists(left, right.to_string())
+                },
                 PacketValue::List(right) => {
                     // println!("Path 4");
-                    result = compare_lists(left, right)
-                }
+                    compare_lists(left, right)
+                },
+                PacketValue::None => {
+                    // Right list is empty and left list might be.
+                    compare_lists(left, "".to_string())
+                },
+            }
+        },
+        PacketValue::None => {
+            match next_right_value {
+                PacketValue::Integer(_) => {
+                    // Left list is empty and right list is not, so sort is
+                    // correct.
+                    Some(true)
+                },
+                PacketValue::List(right) => {
+                    // println!("Path 4");
+                    // Another 'might be' case.
+                    compare_lists("".to_string(), right)
+                },
+                PacketValue::None => {
+                    // Both lists are empty lists, so nothing decisive.
+                    None
+                },
             }
         }
-    }
+    };
 
     // println!("Result: {result:?}; {left:?}, {right:?}");
 
@@ -160,12 +180,12 @@ fn get_next_value(list: String) -> (Option<String>, PacketValue) {
     let tmp = list.split_once(',');
     match tmp {
         Some((popped_integer, remaining)) => {
-            let parsed_integer = popped_integer.parse::<usize>().expect("Not reading an integer...");
-            (Some(remaining.to_string()), PacketValue::Integer(parsed_integer))
+            let parsed_integer = parse_integer(popped_integer);
+            (Some(remaining.to_string()), parsed_integer)
         },
         None => {
-            let parsed_integer = list.parse::<usize>().expect("Not reading an integer...");
-            (None, PacketValue::Integer(parsed_integer))
+            let parsed_integer = parse_integer(list.as_str());
+            (None, parsed_integer)
         }
     }
 }
@@ -177,6 +197,17 @@ fn compare_integers(left: usize, right: usize) -> Option<bool> {
         Ordering::Greater => Some(false),
         Ordering::Equal => None,
     }
+}
+
+// If there's an integer to parse, returns an Integer. If there's no string at
+// all, returns a None. If there's some string, but not parseable to usize,
+// panics.
+fn parse_integer(s: &str) -> PacketValue {
+    if s.is_empty() {
+        return PacketValue::None
+    }
+    let parsed_integer = s.parse::<usize>().expect("Not reading an integer...");
+    PacketValue::Integer(parsed_integer)
 }
 
 /// Height map
