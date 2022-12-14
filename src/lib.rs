@@ -48,8 +48,10 @@ enum SpaceType {
 
 /// Tracks spaces that are not air.
 pub struct Cave {
+    // Would be way faster if this was Vec<Vec<>>
     spaces: HashMap<[isize; 2], SpaceType>,
     sand_source: [isize; 2],
+    pub part: u8,
 }
 
 impl Cave {
@@ -57,29 +59,34 @@ impl Cave {
         Self {
             spaces: HashMap::new(),
             sand_source,
+            part: 1,
         }
     }
 
     /// Return [[L, R], [B, T]]
     fn get_bounds(&self) -> [[isize; 2]; 2] {
         let l = self.spaces
-            .keys()
-            .map(|[x, _]| *x)
+            .iter()
+            .filter(|(_, &space)| matches!(space, SpaceType::Rock))
+            .map(|([x, _], _)| *x)
             .min()
             .unwrap();
         let r = self.spaces
-            .keys()
-            .map(|[x, _]| *x)
+            .iter()
+            .filter(|(_, &space)| matches!(space, SpaceType::Rock))
+            .map(|([x, _], _)| *x)
             .max()
             .unwrap();
         let t = self.spaces
-            .keys()
-            .map(|[_, y]| *y)
+            .iter()
+            .filter(|(_, &space)| matches!(space, SpaceType::Rock))
+            .map(|([_, y], _)| *y)
             .min()
             .unwrap();
         let b = self.spaces
-            .keys()
-            .map(|[_, y]| *y)
+            .iter()
+            .filter(|(_, &space)| matches!(space, SpaceType::Rock))
+            .map(|([_, y], _)| *y)
             .max()
             .unwrap();
         [[l, r], [b, t]]
@@ -88,7 +95,7 @@ impl Cave {
     pub fn print_cave(&self) {
         let bounds = self.get_bounds();
         // println!("{bounds:?}");
-        for y in 0..=bounds[1][0] {
+        for y in 0..=bounds[1][0]+3 {
             for x in bounds[0][0]..=bounds[0][1] {
                 // print!("({x}, {y}); ");
                 if [x, y] == [500, 0] {
@@ -110,16 +117,31 @@ impl Cave {
             Some(space.to_owned())
         } else {
             let bounds = self.get_bounds();
-            // println!("{coords:?} within {bounds:?}?");
-            if coords[0] < bounds[0][0]
-                || coords[0] > bounds[0][1]
-                || coords[1] > bounds[1][0]  // Y is inverted
-                // || coords[1] > bounds[1][1]  // This is checking if the sand
-                // is too high, which doesn't apply
-            {
-                return None
+
+            if self.part == 1 {
+                if coords[0] < bounds[0][0]
+                    || coords[0] > bounds[0][1]
+                    || coords[1] > bounds[1][0]  // Y is inverted
+                    // || coords[1] > bounds[1][1]  // This is checking if the sand
+                    // is too high, which doesn't apply
+                {
+                    return None
+                }
+                Some(SpaceType::Air)
+            } else if self.part == 2 {
+                // println!("{coords:?} within {bounds:?}?");
+                // This could be optimized where if the sand is checking to fall
+                // outside left or right, just say no and then add the height of
+                // that
+                if coords[1] >= bounds[1][0] + 2 {
+                    // The floor.
+                    Some(SpaceType::Rock)
+                } else {
+                    Some(SpaceType::Air)
+                }
+            } else {
+                panic!("This isn't a real part and you know it.");
             }
-            Some(SpaceType::Air)
         }
     }
 
@@ -188,6 +210,10 @@ impl Cave {
                 }
             }
             // Stopped falling.
+            if sand_resting_place == self.sand_source {
+                // The hole be plugged, yo.
+                return false
+            }
             self.spaces.insert(sand_resting_place, SpaceType::Sand);
             return true
 
