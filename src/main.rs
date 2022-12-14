@@ -37,8 +37,10 @@ fn day14() {
 
     let mut drops_in_the_bucket = 0;
     while cave.add_grain_of_sand() {
+        if drops_in_the_bucket % 300 == 0 {
+            cave.print_cave();
+        }
         drops_in_the_bucket += 1;
-        // cave.print_cave();
     }
 
     println!("Day 14, Part 1: {drops_in_the_bucket}");

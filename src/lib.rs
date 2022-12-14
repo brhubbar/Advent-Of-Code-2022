@@ -91,7 +91,10 @@ impl Cave {
         for y in 0..=bounds[1][0] {
             for x in bounds[0][0]..=bounds[0][1] {
                 // print!("({x}, {y}); ");
-
+                if [x, y] == [500, 0] {
+                    print!("+");
+                    continue
+                }
                 match self.get_space(&[x, y]).expect("Bad iterator for printing.") {
                     SpaceType::Rock => print!("#"),
                     SpaceType::Sand => print!("o"),
