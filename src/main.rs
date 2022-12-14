@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use std::collections::HashMap;
+use std::{collections::HashMap, cmp::Ordering};
 use array2d::Array2D;
 use itertools::Itertools;
 
@@ -36,12 +36,34 @@ fn day13() {
         let (left, right) = packet_pair
             .split_once('\n')
             .expect("Not a packet pair.");
-        if compare_lists(left.to_string(), right.to_string()).expect("Found identical packets") {
+        if compare_lists(left.to_string(), right.to_string()) == Ordering::Less {
+            // Properly sorted.
             println!("\n{packet_idx}:\n{left}\n{right}");
             count += packet_idx + 1;  // Elves index from 1
         }
     }
-    println!("Day 13, Part 1: {count}")
+    println!("Day 13, Part 1: {count}");
+
+    let mut packet_vec: Vec<String> = packets
+        .split('\n')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect();
+    packet_vec.push("[[2]]".to_string());
+    packet_vec.push("[[6]]".to_string());
+    packet_vec.sort_by(|left, right| compare_lists(left.to_owned(), right.to_owned()));
+
+    let mut divider_packet_spot = 1;
+    for (packet_idx, packet) in packet_vec.iter().enumerate() {
+        if packet == "[[2]]" || packet == "[[6]]" {
+            divider_packet_spot *= 1 + packet_idx;
+            println!("**{packet}");
+            continue
+        }
+        println!("{packet}");
+    }
+
+    println!("Day 13, Part 2: {divider_packet_spot}");
 }
 
 /// Path planning

@@ -48,24 +48,19 @@ enum PacketValue {
     None,
 }
 
-/// Returns the list with the 'popped' value removed, plus the popped value.
-/// Assumes that the outermost list, so to speak, has its brackets removed. If
-/// they're not, no need to fret: it'll just return that outermost list.
-/// If it determines that it's returning the last value in the list, it'll
-/// return None for the remaining list.
-pub fn compare_lists(left: String, right: String) -> Option<bool> {
+pub fn compare_lists(left: String, right: String) -> Ordering {
     // print!("{left}, {right} => ");
     let (left, next_left_value) = get_next_value(left);
     let (right, next_right_value) = get_next_value(right);
     // println!("{next_left_value:?}, {next_right_value:?}");
     // Compare current values.
-    let result: Option<bool> = match next_left_value {
+    let result: Ordering = match next_left_value {
         PacketValue::Integer(left) => {
             // Compare to right.
             match next_right_value {
                 PacketValue::Integer(right) => {
                     // println!("Path 1");
-                    compare_integers(left, right)
+                    left.cmp(&right)
                 },
                 PacketValue::List(right) => {
                     // println!("Path 2");
@@ -73,7 +68,7 @@ pub fn compare_lists(left: String, right: String) -> Option<bool> {
                 }
                 PacketValue::None => {
                     // Right list is empty and Left list is not.
-                    Some(false)
+                    Ordering::Greater
                 }
             }
         },
@@ -99,7 +94,7 @@ pub fn compare_lists(left: String, right: String) -> Option<bool> {
                 PacketValue::Integer(_) => {
                     // Left list is empty and right list is not, so sort is
                     // correct.
-                    Some(true)
+                    Ordering::Less
                 },
                 PacketValue::List(right) => {
                     // println!("Path 4");
@@ -108,7 +103,7 @@ pub fn compare_lists(left: String, right: String) -> Option<bool> {
                 },
                 PacketValue::None => {
                     // Both lists are empty lists, so nothing decisive.
-                    None
+                    Ordering::Equal
                 },
             }
         }
@@ -116,34 +111,42 @@ pub fn compare_lists(left: String, right: String) -> Option<bool> {
 
     // println!("Result: {result:?}; {left:?}, {right:?}");
 
-    match result {
-        Some(result) => Some(result),
-        None => {
-            match left {
-                Some(left) => {
-                    // Left has a remaining value.
-                    match right {
-                        Some(right) => {
-                            compare_lists(left, right)
-                        }
-                        None => {
-                            // Left is longer than right.
-                            Some(false)
-                        }
+    if result == Ordering::Equal {
+        match left {
+            Some(left) => {
+                // Left has a remaining value.
+                match right {
+                    Some(right) => {
+                        compare_lists(left, right)
                     }
-                },
-                None => {
-                    // Left is done.
-                    // If right still exists, then left is shorter than right,
-                    // which means they are properly sorted.
-                    // If right is also done, then Left == Right.
-                    right.map(|_| true)
+                    None => {
+                        // Left is longer than right.
+                        Ordering::Greater
+                    }
+                }
+            },
+            None => {
+                // Left is done.
+                // If right still exists, then left is shorter than right,
+                // which means they are properly sorted.
+                // If right is also done, then Left == Right.
+                match right {
+                    Some(_) => Ordering::Less,
+                    None => Ordering::Equal,
                 }
             }
-        },
+        }
+    } else {
+        result
     }
 }
 
+
+/// Returns the list with the 'popped' value removed, plus the popped value.
+/// Assumes that the outermost list, so to speak, has its brackets removed. If
+/// they're not, no need to fret: it'll just return that outermost list.
+/// If it determines that it's returning the last value in the list, it'll
+/// return None for the remaining list.
 fn get_next_value(list: String) -> (Option<String>, PacketValue) {
     if list.starts_with('[') {
         // Break out the outermost list and return it.
@@ -187,15 +190,6 @@ fn get_next_value(list: String) -> (Option<String>, PacketValue) {
             let parsed_integer = parse_integer(list.as_str());
             (None, parsed_integer)
         }
-    }
-}
-
-/// Returns a boolean indicating whether the packets are sorted correctly.
-fn compare_integers(left: usize, right: usize) -> Option<bool> {
-    match left.cmp(&right) {
-        Ordering::Less => Some(true),
-        Ordering::Greater => Some(false),
-        Ordering::Equal => None,
     }
 }
 
